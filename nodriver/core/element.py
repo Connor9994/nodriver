@@ -583,6 +583,27 @@ class Element:
             cdp.input_.dispatch_mouse_event("mouseReleased", x=center[0], y=center[1])
         )
 
+    async def mouse_move_random(self, tab):
+        """moves mouse (not click), to element position. when an element has an
+        hover/mouseover effect, this would trigger it
+        random location between the element's (left,top) and (right,bottom)"""
+        self._remote_object = await self._tab.send(cdp.dom.resolve_node(backend_node_id=self.backend_node_id))
+        quads = await self.tab.send(cdp.dom.get_content_quads(object_id=self.remote_object.object_id))
+        left = quads[0][0]
+        top = quads[0][1]
+        right = quads[0][2]
+        top = quads[0][3]
+        right = quads[0][4]
+        bottom = quads[0][5]
+        left = quads[0][6]
+        bottom = quads[0][7]
+        x = uniform(left, right)
+        y = uniform(top, bottom)
+        await self._tab.send(cdp.input_.dispatch_mouse_event("mouseMoved", x=x, y=y))
+        await tab.sleep(uniform(0.15,0.35))
+        await self._tab.send(cdp.input_.dispatch_mouse_event("mouseReleased", x=x, y=y))
+        await tab.sleep(uniform(0.15,0.5))
+
     async def mouse_drag(
         self,
         destination: typing.Union[Element, typing.Tuple[int, int]],
@@ -708,6 +729,23 @@ class Element:
             await self._tab.send(cdp.input_.dispatch_key_event("char", text=char))
             for char in list(text)
         ]
+    
+    async def send_keys_random(self, text: str, tab):
+        """
+        Send text to an input field, or any other HTML element with a random delay between each key.
+        
+        hint, if you ever get stuck where using py:meth:`~click`
+        does not work, sending the keystroke \\n or \\r\\n or a spacebar work wonders!
+        
+        :param text: text to send
+        :param delay: delay in seconds between keys
+        :return: None
+        """
+        await self.apply("(elem) => elem.focus()")
+        
+        for char in list(text):
+            await self._tab.send(cdp.input_.dispatch_key_event("char", text=char))
+            await tab.sleep(random())
 
     async def send_file(self, *file_paths: PathLike):
         """
