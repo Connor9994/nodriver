@@ -7,6 +7,7 @@ import pathlib
 import secrets
 import typing
 
+from random import *
 from . import util
 from ._contradict import ContraDict
 from .config import PathLike
